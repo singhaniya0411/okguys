@@ -1,0 +1,73 @@
+#include <iostream>
+class Process{
+    public:
+    int processId;
+    int arrivalTime;
+    int burstTime;
+};
+
+void calculateCompletionTime(Process processes[], int n, int completionTime[]) {
+    int currentTime = 0;
+
+    for (int i = 0; i < n; ++i) {
+        currentTime = std::max(currentTime, processes[i].arrivalTime);
+        completionTime[i] = currentTime + processes[i].burstTime;
+        currentTime = completionTime[i];
+    }
+}
+
+void calculateTurnaroundTime(Process processes[], int n, int completionTime[], int turnaroundTime[]) {
+    for (int i = 0; i < n; ++i) {
+        turnaroundTime[i] = completionTime[i] - processes[i].arrivalTime;
+    }
+}
+
+void calculateWaitingTime(Process processes[], int n, int turnaroundTime[], int waitingTime[]) {
+    for (int i = 0; i < n; ++i) {
+        waitingTime[i] = turnaroundTime[i] - processes[i].burstTime;
+    }
+}
+
+void calculateAverageTimes(Process processes[], int n) {
+    int completionTime[n];
+    int turnaroundTime[n];
+    int waitingTime[n];
+
+    calculateCompletionTime(processes, n, completionTime);
+    calculateTurnaroundTime(processes, n, completionTime, turnaroundTime);
+    calculateWaitingTime(processes, n, turnaroundTime, waitingTime);
+
+    // Calculate and display average turnaround time and waiting time
+    double avgTurnaroundTime = 0.0, avgWaitingTime = 0.0;
+    for (int i = 0; i < n; ++i) {
+        avgTurnaroundTime += turnaroundTime[i];
+        avgWaitingTime += waitingTime[i];
+    }
+
+    avgTurnaroundTime /= n;
+    avgWaitingTime /= n;
+
+    std::cout << "Average Turnaround Time: " << avgTurnaroundTime << std::endl;
+    std::cout << "Average Waiting Time: " << avgWaitingTime << std::endl;
+}
+
+int main() {
+    int n;
+    std::cout << "Enter the number of processes: ";
+    std::cin >> n;
+
+    Process processes[n];
+
+    for (int i = 0; i < n; ++i) {
+        std::cout << "Enter arrival time and burst time for process " << i + 1 << ": ";
+        std::cin >> processes[i].arrivalTime >> processes[i].burstTime;
+        processes[i].processId = i + 1;
+    }
+
+    calculateAverageTimes(processes, n);
+
+    return 0;
+}
+
+
+
