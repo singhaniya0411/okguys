@@ -1,36 +1,98 @@
+#include<iostream>
+#include<algorithm>
+#include<climits>
 
-import numpy as np
-import matplotlib.pyplot as plt
+using namespace std;
 
-# Define the function
-def f(x):
-    return -10 * np.cos(np.pi * x - 2.2) + (x + 1.5) * x
+// Structure to represent a process
+struct Process {
+    int processID;
+    int arrivalTime;
+    int burstTime;
+    int remainingTime;
+    int startTime;
+    int turnaroundTime;
+    int waitingTime;
+};
 
-# Generate x values
-x = np.linspace(-10, 10, 1000)
+// Function to perform SRTF scheduling
+void srtfScheduling(Process processes[], int n) {
+    int currentTime = 0; // Current time
+    int completedProcesses = 0;
+    float totalTurnaroundTime = 0.0, totalWaitingTime = 0.0;
 
-# Calculate corresponding y values
-y = f(x)
+    cout << "Process Execution Order:\n";
 
-np.min(y)
+    while (completedProcesses < n) {
+        int shortestRemainingTimeIndex = -1;
+        int shortestRemainingTime = INT_MAX;
 
-# Find the index of the minimum value
-min_index = np.argmin(y)
+        for (int i = 0; i < n; ++i) {
+            if (processes[i].arrivalTime <= currentTime && processes[i].remainingTime < shortestRemainingTime && processes[i].remainingTime > 0) {
+                shortestRemainingTime = processes[i].remainingTime;
+                shortestRemainingTimeIndex = i;
+            }
+        }
 
-# Find the global minimum
-global_min_x = x[min_index]
-global_min_y = y[min_index]
+        if (shortestRemainingTimeIndex == -1) {
+            currentTime++;
+        } else {
+            Process& currentProcess = processes[shortestRemainingTimeIndex];
 
-# Plot the function
-plt.plot(x, y, label='f(x)')
-plt.scatter(global_min_x, global_min_y, color='red', marker='o', label='Global Minimum')
-plt.xlabel('x')
-plt.ylabel('f(x)')
-plt.legend()
-plt.title('Global Optimization of f(x)')
-plt.grid(True)
-plt.show()
+            if (currentProcess.remainingTime == currentProcess.burstTime) {
+                currentProcess.startTime = currentTime;
+            }
 
-# Display the global minimum
-print(f"Global Minimum: f({global_min_x}) = {global_min_y}")
+            currentProcess.remainingTime--;
+            currentTime++;
+
+            if (currentProcess.remainingTime == 0) {
+                // Process is completed
+                completedProcesses++;
+
+                // Calculate turnaround and waiting times
+                currentProcess.turnaroundTime = currentTime - currentProcess.arrivalTime;
+                currentProcess.waitingTime = currentProcess.turnaroundTime - currentProcess.burstTime;
+
+                // Update total turnaround and waiting times
+                totalTurnaroundTime += currentProcess.turnaroundTime;
+                totalWaitingTime += currentProcess.waitingTime;
+
+                cout << "Executing Process " << currentProcess.processID << " from time "
+                     << currentProcess.startTime << " to " << currentTime << endl;
+            }
+        }
+    }
+
+    // Calculate averages
+    float avgTurnaroundTime = totalTurnaroundTime / n;
+    float avgWaitingTime = totalWaitingTime / n;
+
+    cout << "\nAverage Turnaround Time: " << avgTurnaroundTime << endl;
+    cout << "Average Waiting Time: " << avgWaitingTime << endl;
+}
+
+int main() {
+    int n;
+
+    // Input the number of processes
+    cout << "Enter the number of processes: ";
+    cin >> n;
+
+    // Input arrival time and burst time for each process
+    Process processes[n];
+    for (int i = 0; i < n; ++i) {
+        cout << "Enter arrival time for Process " << i + 1 << ": ";
+        cin >> processes[i].arrivalTime;
+        cout << "Enter burst time for Process " << i + 1 << ": ";
+        cin >> processes[i].burstTime;
+        processes[i].processID = i + 1;
+        processes[i].remainingTime = processes[i].burstTime;
+    }
+
+    // Perform SRTF scheduling
+    srtfScheduling(processes, n);
+
+    return 0;
+}
 
