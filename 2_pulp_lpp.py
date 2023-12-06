@@ -1,59 +1,88 @@
+#include<iostream>
+#include<algorithm>
 
-!pip install pulp
+using namespace std;
 
-import pulp
-import matplotlib.pyplot as plt
+// Structure to represent a process
+struct Process {
+    int processID;
+    int arrivalTime;
+    int burstTime;
+    int priority;
+    int turnaroundTime;
+    int waitingTime;
+};
 
-"""This line creates a Linear Programming problem (LP) instance named lp_problem with the objective of maximizing (LpMaximize)."""
+// Function to perform Priority scheduling
+void priorityScheduling(Process processes[], int n) {
+    // Sort processes based on arrival time
+    sort(processes, processes + n, [](const Process& a, const Process& b) {
+        return a.arrivalTime < b.arrivalTime;
+    });
 
-lp_problem = pulp.LpProblem("LPP", pulp.LpMaximize)
+    int currentTime = 0; // Current time
+    float totalTurnaroundTime = 0.0, totalWaitingTime = 0.0;
 
-"""These lines define two decision variables, x and y, with lower bounds set to 0. These variables represent the values you want to find in the optimization."""
+    cout << "Process Execution Order:\n";
 
-x = pulp.LpVariable("x", lowBound=0)
-y = pulp.LpVariable("y", lowBound=0)
+    for (int i = 0; i < n; ++i) {
+        // Find process with the highest priority among arrived processes
+        int highestPriorityIndex = i;
+        for (int j = i + 1; j < n && processes[j].arrivalTime <= currentTime; ++j) {
+            if (processes[j].priority < processes[highestPriorityIndex].priority) {
+                highestPriorityIndex = j;
+            }
+        }
 
-"""This line sets the objective function to be maximized. In this case, it's 3x + 2y."""
+        // Swap processes
+        swap(processes[i], processes[highestPriorityIndex]);
 
-lp_problem += 3 * x + 2 * y
+        // Execute the process
+        cout << "Executing Process " << processes[i].processID << " from time "
+             << currentTime << " to " << currentTime + processes[i].burstTime << endl;
 
-"""These lines define the constraints of the LP. The first constraint, x <= 4, restricts x to be less than or equal to 4. The second constraint, y <= 6, restricts y to be less than or equal to 6. The third constraint, 2x + y <= 12, restricts the linear combination of x and y to be less than or equal to 12."""
+        // Update turnaround and waiting times
+        processes[i].turnaroundTime = currentTime + processes[i].burstTime - processes[i].arrivalTime;
+        processes[i].waitingTime = processes[i].turnaroundTime - processes[i].burstTime;
 
-lp_problem += x <= 4
-lp_problem += y <= 6
-lp_problem += 2 * x + y <= 12
+        // Update total turnaround and waiting times
+        totalTurnaroundTime += processes[i].turnaroundTime;
+        totalWaitingTime += processes[i].waitingTime;
 
-"""This line solves the LP using the PuLP solver. It finds the optimal values for x and y that maximize the objective function within the given constraints."""
+        // Update current time
+        currentTime += processes[i].burstTime;
+    }
 
-lp_problem.solve()
+    // Calculate averages
+    float avgTurnaroundTime = totalTurnaroundTime / n;
+    float avgWaitingTime = totalWaitingTime / n;
 
-"""This line prints the status of the LP solver, indicating whether it's solved successfully, infeasible, or unbounded."""
+    cout << "\nAverage Turnaround Time: " << avgTurnaroundTime << endl;
+    cout << "Average Waiting Time: " << avgWaitingTime << endl;
+}
 
-print("Status:", pulp.LpStatus[lp_problem.status])
+int main() {
+    int n;
 
-print("x =", x.varValue)
-print("y =", y.varValue)
+    // Input the number of processes
+    cout << "Enter the number of processes: ";
+    cin >> n;
 
-print("Optimal Value =", pulp.value(lp_problem.objective))
+    // Input arrival time, burst time, and priority for each process
+    Process processes[n];
+    for (int i = 0; i < n; ++i) {
+        cout << "Enter arrival time for Process " << i + 1 << ": ";
+        cin >> processes[i].arrivalTime;
+        cout << "Enter burst time for Process " << i + 1 << ": ";
+        cin >> processes[i].burstTime;
+        cout << "Enter priority for Process " << i + 1 << ": ";
+        cin >> processes[i].priority;
+        processes[i].processID = i + 1;
+    }
 
-x_values = [x.varValue for x in [x, y]]
-y_values = [y.varValue for y in [x, y]]
+    // Perform Priority scheduling
+    priorityScheduling(processes, n);
 
-
-
-print(x_values, y_values)
-
-"""This line plots a red dot ('ro') at the coordinates determined by the optimal values of x and y, representing the optimal solution."""
-
-plt.plot(x.varValue, y.varValue, 'ro', label="Optimal Value")
-plt.fill([0, 4, 4, 3, 0], [0, 0, 4, 6, 6], 'b', alpha=0.2)
-
-plt.xlabel("x")
-plt.ylabel("y")
-plt.title("Graphical Solution of LPP")
-
-plt.legend()
-
-plt.grid(True)
-plt.show()
+    return 0;
+}
 
