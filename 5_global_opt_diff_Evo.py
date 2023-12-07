@@ -1,21 +1,25 @@
-import numpy as np
-from scipy.optimize import differential_evolution
+#include<iostream> #include<unistd.h>
+#include<sys/wait.h> #include<stdlib.h>
 
-# Define the function to minimize
-def objective_function(x):
-    return -10 * np.cos(np.pi * x - 2.2) + (x + 1.5) * x
+using namespace std;
 
-# Define bounds for the optimization
-bounds = [(-10, 10)]  # Adjust bounds as needed
+int main()
 
-# Use differential evolution to find the global minimum
-result = differential_evolution(objective_function, bounds)
+int pid ;
+pid=fork();
+ if (pid<0){
 
-# Extract the optimal solution
-global_min_x = result.x
-global_min_f = result.fun
+cout<< FORK FAILED": exit(1);
+}
+else if(pid==0){
 
-print("global min x: ",global_min_x)
-print("Global Optimal Solution:")
-print(f"x = {global_min_x[0]}")
-print(f"f(x) = {global_min_f}")
+cout<<"I AM CHILD PROCESS" <<endl; cout<<"MY PID IS <<getpid()<<endl; exit(1);
+}
+else{
+cout<<"I AM PARENT PROCESS"<<endl;
+
+cout<<"MY ACTUAL PID IS: <<getpld()<<endl; wait(NULL );
+exit(1);
+}
+return 0;
+}
