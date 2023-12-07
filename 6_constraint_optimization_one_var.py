@@ -1,64 +1,64 @@
+#include <pthread.h>
+#include <iostream>
+#include <vector>
 
-from sympy import symbols, diff, solve, Matrix
+// Define the structure for thread data
+struct thread_data {
+    int id;
+    int num;
+};
 
-# Define the variables
-x, y, l = symbols('x y lambda')
+// Define the shared total
+int total = 0;
 
-# Define the objective function and constraint
-f = x**2 + y**2
-g = x + y - 1
+// Define the mutex
+pthread_mutex_t mutex;
 
-# Define the Lagrangian
-L = f - l * g
+// This function will be executed by each thread
+void* add_to_total(void* threadarg) {
+    // Lock the mutex before changing the total
+    pthread_mutex_lock(&mutex);
 
-# Compute partial derivatives
-partials = [diff(L, var) for var in (x, y, l)]
+    // Cast the argument to a thread_data pointer
+    struct thread_data* data;
+    data = (struct thread_data*) threadarg;
 
-# Solve the system of equations
-solution = solve(partials, (x, y, l), dict=True)[0]
+    // Add the number to the total
+    total += data->num;
 
-# Extract the optimal values
-optimal_x = solution[x]
-optimal_y = solution[y]
+    // Unlock the mutex
+    pthread_mutex_unlock(&mutex);
 
-# Compute the Hessian matrix
-# hessian_matrix = Matrix([[diff(L.diff(var1), var2) for var1 in (x, y, l)] for var2 in (x, y, l)])
+    pthread_exit(NULL);
+}
 
-# Compute the Hessian matrix using a list of lists
-hessian_list = []
+int main() {
+    // Initialize the mutex
+    pthread_mutex_init(&mutex, NULL);
 
-# Iterate over var2
-for var2 in (x, y, l):
-    # Initialize a row for var2
-    row = []
+    // The numbers to add
+    std::vector<int> numbers = {1, 2, 3, 4, 5};
 
-    # Iterate over var1
-    for var1 in (x, y, l):
-        # Calculate the second-order partial derivative and append to the row
-        row.append(diff(L.diff(var1), var2))
+    // Create a vector of threads and thread data
+    std::vector<pthread_t> threads(numbers.size());
+    std::vector<thread_data> thread_data_array(numbers.size());
 
-    # Append the row to the Hessian list
-    hessian_list.append(row)
+    // Create the threads
+    for(int i = 0; i < numbers.size(); i++) {
+        thread_data_array[i].id = i;
+        thread_data_array[i].num = numbers[i];
+        pthread_create(&threads[i], NULL, add_to_total, (void*)&thread_data_array[i]);
+    }
 
-# Create an instance of the Matrix class from the list of lists
-hessian_matrix = Matrix(hessian_list)
+    // Wait for all threads to complete
+    for(int i = 0; i < numbers.size(); i++) {
+        pthread_join(threads[i], NULL);
+    }
+   // Print the total
+    std::cout << "Total: " << total << std::endl;
 
-# Display the Hessian matrix
-print(hessian_matrix)
+    // Destroy the mutex
+    pthread_mutex_destroy(&mutex);
 
-
-
-
-# Check the definiteness of the Hessian at the stationary point
-hessian_determinant = hessian_matrix.det()
-if hessian_determinant > 0:
-    print("Stationary point is a local minimum.")
-elif hessian_determinant < 0:
-    print("Stationary point is a local maximum.")
-else:6
-    print("Second-order test inconclusive (saddle point or test fails).")
-
-# Display the result
-print("Optimal solution:")
-print(f"x: {optimal_x}")
-print(f"y: {optimal_y}")
+    return 0;
+}
